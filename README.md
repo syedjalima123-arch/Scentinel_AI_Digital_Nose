@@ -15,7 +15,6 @@ People with anosmia may not detect gas leaks, smoke, or spoiled food. Scentinel 
 - Arduino-based physical prototype
 
 ## Technologies
-- Arduino UNO
 - ESP32
 - MQ-2 Gas Sensor
 - MQ-135 Gas Sensor
@@ -30,8 +29,9 @@ The project uses an odor classification dataset for machine-learning experimenta
 ## Current Status
 - Dataset analysis completed
 - Weka classification completed
+- Python simulation completed
 - Hardware prototype under development
-- Arduino implementation under development
+  
 
 ## Future Development
-The system will integrate the sensors, Arduino, classification system and voice-alert module into a working physical prototype.
+The system will integrate the sensors,classification system and voice-alert module into a working physical prototype.
