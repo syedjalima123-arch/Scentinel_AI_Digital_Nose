@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#20150D">
+<title>Scentinel-AI — Your Nose, Backed Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  [data-theme="dark"]{
+    --bg:#1C130C; --bg2:#241A11; --bg3solid:#2E2115; --bg4:#3A2A1A;
+    --border:#40301F; --border2:#54402A;
+    --accent:#E8A05C; --accent-soft:rgba(232,160,92,0.15); --accent-border:rgba(232,160,92,0.36);
+    --safe:#B9C46B; --safe-soft:rgba(185,196,107,0.15); --safe-border:rgba(185,196,107,0.34);
+    --hazard:#E86A50; --hazard-soft:rgba(232,106,80,0.17); --hazard-border:rgba(232,106,80,0.36);
+    --text:#F6EBDA; --text2:#CBAF8B; --text3:#8C7457;
+    --shadow:rgba(0,0,0,0.45); --card-hover:#2A1E13;
+    --sheet-bg:#20160D; --overlay:rgba(10,6,3,0.6);
+  }
+  [data-theme="light"]{
+    --bg:#FBF2E3; --bg2:#FFFFFF; --bg3solid:#F6E7CC; --bg4:#EFD9AE;
+    --border:#E6D0A2; --border2:#D8BA80;
+    --accent:#B5701A; --accent-soft:rgba(181,112,26,0.11); --accent-border:rgba(181,112,26,0.3);
+    --safe:#748029; --safe-soft:rgba(116,128,41,0.11); --safe-border:rgba(116,128,41,0.28);
+    --hazard:#BC3E28; --hazard-soft:rgba(188,62,40,0.11); --hazard-border:rgba(188,62,40,0.28);
+    --text:#2E1F0F; --text2:#5E4A30; --text3:#8D7550;
+    --shadow:rgba(45,28,5,0.1); --card-hover:#FBF0D8;
+    --sheet-bg:#FFFBF2; --overlay:rgba(60,40,15,0.35);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Manrope',sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5;
+    transition:background .25s, color .25s;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  h1,h2,h3{ font-family:'Manrope',sans-serif; font-weight:800; letter-spacing:-0.01em; color:var(--text); margin:0; }
+  .mono{ font-family:'JetBrains Mono',monospace; }
+  button{ font-family:'Manrope',sans-serif; }
+
+  .app{ max-width:460px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+
+  
+  .topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); background:var(--bg2); position:sticky; top:0; z-index:20; }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-icon{ width:32px; height:32px; border-radius:10px; background:var(--accent); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:16px; }
+  .brand-text{ display:flex; flex-direction:column; line-height:1.15; }
+  .brand-name{ font-size:16px; font-weight:800; }
+  .brand-sub{ font-size:10.5px; color:var(--text3); font-family:'JetBrains Mono',monospace; }
+  .topbar-right{ display:flex; gap:8px; align-items:center; }
+  .icon-btn{ width:34px; height:34px; border-radius:9px; background:var(--bg3solid); border:1px solid var(--border2); cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; color:var(--text2); }
+  .icon-btn:active{ transform:scale(0.94); }
+  .conn-chip{ display:flex; align-items:center; gap:6px; padding:6px 10px; border-radius:99px; background:var(--bg3solid); border:1px solid var(--border); font-size:11px; font-weight:600; font-family:'JetBrains Mono',monospace; color:var(--text2); white-space:nowrap; }
+  .conn-dot{ width:7px;height:7px;border-radius:50%; background:var(--text3); flex-shrink:0; }
+  .conn-dot.active{ background:var(--safe); box-shadow:0 0 5px var(--safe); }
+  .conn-dot.warn{ background:var(--accent); box-shadow:0 0 5px var(--accent); }
+  .conn-dot.err{ background:var(--hazard); }
+
+  main{ flex:1; padding:16px 16px 28px; display:flex; flex-direction:column; gap:14px; }
+
+  
+  .alert-banner{ display:none; align-items:center; gap:10px; background:var(--hazard-soft); color:var(--hazard); border:1px solid var(--hazard-border); border-radius:12px; padding:11px 14px; font-size:13px; font-weight:600; animation:slideIn .3s ease; }
+  .alert-banner.show{ display:flex; }
+  @keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .alert-dot{ width:7px;height:7px;border-radius:50%; background:var(--hazard); animation:blink .8s infinite; flex-shrink:0; }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  .alert-x{ margin-left:auto; background:none; border:none; color:inherit; font-size:14px; cursor:pointer; padding:2px 4px; }
+
+  
+  .status-card{ background:var(--bg2); border:1px solid var(--border); border-radius:18px; box-shadow:0 1px 3px var(--shadow), 0 8px 20px var(--shadow); padding:20px; }
+  .badge{ display:flex; align-items:center; gap:14px; padding:16px; border-radius:14px; background:var(--safe-soft); transition:background .3s; }
+  .badge-emoji{ font-size:34px; line-height:1; flex-shrink:0; }
+  .badge-textcol{ min-width:0; }
+  .badge-label{ font-size:19px; letter-spacing:0.01em; color:var(--safe); font-weight:800; transition:color .3s; }
+  .badge-detail{ font-size:12.5px; color:var(--text2); margin-top:3px; }
+  .badge.caution{ background:var(--accent-soft); } .badge.caution .badge-label{ color:var(--accent); }
+  .badge.hazard{ background:var(--hazard-soft); } .badge.hazard .badge-label{ color:var(--hazard); }
+
+  .risk-row{ display:flex; align-items:center; gap:12px; margin-top:16px; }
+  .risk-track{ flex:1; height:9px; border-radius:99px; background:var(--bg3solid); border:1px solid var(--border); overflow:hidden; }
+  .risk-fill{ height:100%; width:0%; background:var(--accent); border-radius:99px; transition:width .4s ease, background .4s ease; }
+  .risk-caption{ font-size:11.5px; color:var(--text3); white-space:nowrap; font-family:'JetBrains Mono',monospace; }
+
+  .chip-row{ display:flex; gap:10px; }
+  .chip{ flex:1; border:1px solid var(--border); border-radius:12px; padding:11px 13px; background:var(--bg2); display:flex; align-items:center; gap:10px; }
+  .chip-ico{ font-size:18px; }
+  .chip-label{ font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; font-family:'JetBrains Mono',monospace; }
+  .chip-value{ font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; color:var(--text); }
+  .chip-value span{ font-size:11px; color:var(--text3); font-weight:500; }
+
+  .card{ background:var(--bg2); border:1px solid var(--border); border-radius:16px; padding:16px; }
+  .card-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .card-title{ font-size:13.5px; font-weight:700; color:var(--text); }
+  .card-sub{ font-size:11px; color:var(--text3); margin-top:1px; }
+
+  .chart-wrap{ position:relative; height:170px; width:100%; }
+
+  .pie-wrap{ display:flex; align-items:center; gap:16px; }
+  .pie-chart-box{ position:relative; width:120px; height:120px; flex-shrink:0; }
+  .pie-legend{ flex:1; display:flex; flex-direction:column; gap:7px; min-width:0; }
+  .pie-legend-row{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
+  .pie-swatch{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+  .pie-legend-name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pie-legend-count{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text3); }
+  @media (max-width:360px){ .pie-wrap{ flex-direction:column; align-items:stretch; } .pie-chart-box{ margin:0 auto; } }
+
+  .recent-list{ display:flex; flex-direction:column; gap:7px; max-height:340px; overflow-y:auto; }
+  .recent-row{ display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:10px; background:var(--bg3solid); border:1px solid var(--border); }
+  .recent-icon{ font-size:18px; flex-shrink:0; }
+  .recent-name{ font-weight:700; font-size:12.5px; color:var(--text); flex:1; }
+  .recent-sub{ font-size:10px; color:var(--text3); font-family:'JetBrains Mono',monospace; text-align:right; flex-shrink:0; }
+  .recent-time{ font-size:10.5px; color:var(--text3); font-family:'JetBrains Mono',monospace; flex-shrink:0; }
+  .empty-note{ font-size:11.5px; color:var(--text3); padding:6px 0; }
+
+  footer{ text-align:center; font-size:10.5px; color:var(--text3); font-family:'JetBrains Mono',monospace; padding:6px 0 4px; }
+
+  
+  .sheet-overlay{ position:fixed; inset:0; background:var(--overlay); z-index:90; display:none; }
+  .sheet-overlay.show{ display:block; }
+  .sheet{ position:fixed; left:0; right:0; bottom:0; max-width:460px; margin:0 auto; background:var(--sheet-bg); border:1px solid var(--border); border-bottom:none; border-radius:20px 20px 0 0; z-index:91; max-height:88vh; display:flex; flex-direction:column; transform:translateY(100%); transition:transform .28s ease; box-shadow:0 -8px 30px var(--shadow); }
+  .sheet.show{ transform:translateY(0); }
+  .sheet-handle{ width:36px; height:4px; border-radius:99px; background:var(--border2); margin:10px auto 2px; flex-shrink:0; }
+  .sheet-head{ display:flex; align-items:center; justify-content:space-between; padding:10px 18px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+  .sheet-head h2{ font-size:16px; }
+  .sheet-body{ padding:16px 18px 24px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
+  .sheet-section-label{ font-size:10px; font-weight:700; color:var(--text3); text-transform:uppercase; letter-spacing:.1em; margin-bottom:8px; font-family:'JetBrains Mono',monospace; }
+
+  .panel{ background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .panel-sub{ font-size:12px; color:var(--text3); margin-top:3px; line-height:1.5; }
+
+  .conn-row{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  input[type=text],input[type=email]{ font-family:'JetBrains Mono',monospace; font-size:13px; padding:9px 12px; border-radius:9px; border:1px solid var(--border2); background:var(--bg3solid); color:var(--text); min-width:150px; flex:1; outline:none; transition:border-color .15s; }
+  input[type=text]:focus,input[type=email]:focus{ border-color:var(--accent); }
+  input::placeholder{ color:var(--text3); }
+
+  button{ font-weight:700; font-size:13px; padding:9px 16px; border-radius:9px; border:1px solid var(--border2); background:var(--bg3solid); color:var(--text2); cursor:pointer; transition:all .15s; }
+  button:hover:not(:disabled){ background:var(--bg4); color:var(--text); }
+  button:active:not(:disabled){transform:scale(0.98);}
+  button:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-primary{ background:var(--accent-soft); color:var(--accent); border-color:var(--accent-border); }
+  .btn-primary:hover:not(:disabled){ background:var(--accent); color:#1a1408; }
+  .btn-ghost{ background:transparent; border-color:var(--border2); color:var(--text2); }
+  .btn-danger{ background:transparent; border-color:var(--hazard-border); color:var(--hazard); }
+  .btn-danger:hover:not(:disabled){ background:var(--hazard-soft); }
+  .btn-small{ padding:7px 12px; font-size:11.5px; }
+  .btn-full{ width:100%; margin-top:8px; }
+
+  .help-text{ font-size:11px; color:var(--text3); margin-top:10px; line-height:1.6; }
+  code.inline{ font-family:'JetBrains Mono',monospace; background:var(--bg3solid); padding:1px 6px; border-radius:5px; border:1px solid var(--border); font-size:11px; }
+
+  .log-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  table{ width:100%; border-collapse:collapse; font-size:11.5px; }
+  thead th{ text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text3); font-weight:700; padding:7px 6px; border-bottom:1px solid var(--border); white-space:nowrap; font-family:'JetBrains Mono',monospace; }
+  tbody td{ padding:8px 6px; border-bottom:1px solid var(--border); color:var(--text); white-space:nowrap; }
+  tbody tr:hover{ background:var(--card-hover); }
+  .log-table-wrap{ max-height:220px; overflow:auto; border-radius:8px; border:1px solid var(--border); }
+  .empty-log{ padding:22px 10px; text-align:center; color:var(--text3); font-size:12.5px; }
+  .log-line{ padding:1.5px 0; }
+  .log-line.ok{ color:var(--safe); } .log-line.err{ color:var(--hazard); } .log-line.info{ color:var(--accent); }
+
+  .class-pill{ padding:3px 9px; border-radius:99px; font-size:10.5px; font-weight:700; letter-spacing:.02em; display:inline-flex; align-items:center; gap:5px; }
+  .class-safe{ background:var(--safe-soft); color:var(--safe); }
+  .class-caution{ background:var(--accent-soft); color:var(--accent); }
+  .class-hazard{ background:var(--hazard-soft); color:var(--hazard); }
+  .alert-fired{ color:var(--hazard); font-weight:700; }
+  .alert-none{ color:var(--text3); }
+
+  .notif-toggle{ display:flex; align-items:center; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:12.5px; color:var(--text2); }
+  .notif-toggle:last-child{ border-bottom:none; }
+  .toggle{ width:34px; height:19px; border-radius:99px; background:var(--bg3solid); border:1px solid var(--border2); position:relative; cursor:pointer; transition:all .2s; flex-shrink:0; }
+  .toggle.on{ background:var(--accent-soft); border-color:var(--accent); }
+  .toggle-knob{ width:13px; height:13px; border-radius:50%; background:var(--text3); position:absolute; top:2px; left:2px; transition:left .2s, background .2s; }
+  .toggle.on .toggle-knob{ left:17px; background:var(--accent); }
+
+  .contact-row{ display:flex; gap:6px; }
+
+  .speaker-row{ display:flex; align-items:center; gap:12px; margin:9px 0; }
+  .speaker-icon{ width:38px;height:38px;border-radius:50%; background:var(--bg3solid); border:2px solid var(--border2); display:flex;align-items:center;justify-content:center; font-size:15px; flex-shrink:0; transition:all .3s; }
+  .speaker-icon.on{ background:var(--accent-soft); border-color:var(--accent); box-shadow:0 0 12px var(--accent-soft); }
+  .speaker-info .sp-state{ font-family:'JetBrains Mono',monospace; font-size:11.5px; font-weight:700; color:var(--text); }
+  .speaker-info .sp-sub{ font-size:10px; color:var(--text3); margin-top:1px; }
+
+  .disclaimer{ font-size:11.5px; color:var(--text2); background:var(--accent-soft); border:1px solid var(--accent-border); border-radius:12px; padding:11px 13px; line-height:1.6; }
+
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">👃</div>
+      <div class="brand-text">
+        <span class="brand-name">Scentinel-AI</span>
+        <span class="brand-sub">your nose, backed up</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="conn-chip"><span class="conn-dot" id="camStatusDot"></span><span id="statusText">Not connected</span></div>
+      <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle bright/dark theme">🌙</button>
+      <button class="icon-btn" onclick="openSheet()" title="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <main>
+
+    <div id="alertBanner" class="alert-banner">
+      <div class="alert-dot"></div>
+      <span id="alertText">Something's in the air.</span>
+      <button class="alert-x" onclick="document.getElementById('alertBanner').classList.remove('show')">✕</button>
+    </div>
+
+    
+    <div class="status-card">
+      <div class="badge" id="statusBadge">
+        <div class="badge-emoji" id="statusBadgeEmoji">🌿</div>
+        <div class="badge-textcol">
+          <div class="badge-label" id="statusBadgeLabel">Normal Air</div>
+          <div class="badge-detail" id="statusBadgeDetail">Nothing to worry about right now</div>
+        </div>
+      </div>
+      <div class="risk-row">
+        <div class="risk-track"><div class="risk-fill" id="riskFill"></div></div>
+        <div class="risk-caption" id="riskMeta">waiting…</div>
+      </div>
+    </div>
+
+    
+    <div class="chip-row">
+      <div class="chip"><span class="chip-ico">🌡️</span><div><div class="chip-label">Temp</div><div class="chip-value" id="val-temp">—<span> °C</span></div></div></div>
+      <div class="chip"><span class="chip-ico">💧</span><div><div class="chip-label">Humidity</div><div class="chip-value" id="val-humidity">—<span> %</span></div></div></div>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Trend</div>
+          <div class="card-sub">Last 60 readings</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+    </div>
+
+   
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Recent history</div>
+          <div class="card-sub">What's been noticed</div>
+        </div>
+      </div>
+      <div class="recent-list" id="recentList">
+        <span class="empty-note">Nothing noticed yet — connect Firebase or try the demo in Settings.</span>
+      </div>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Smell breakdown</div>
+          <div class="card-sub" id="breakdownSub">What's been noticed most often</div>
+        </div>
+      </div>
+      <div class="pie-wrap">
+        <div class="pie-chart-box"><canvas id="pieChart"></canvas></div>
+        <div class="pie-legend" id="pieLegend">
+          <span class="empty-note">No readings yet.</span>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Weekly report</div>
+          <div class="card-sub">A quick summary, once a week</div>
+        </div>
+      </div>
+      <div class="notif-toggle">Notify me weekly<div class="toggle on" id="tog-weekly" data-notif="weekly" role="switch" aria-checked="true" tabindex="0"><div class="toggle-knob"></div></div></div>
+      <div class="help-text" id="weeklyReportText">Nothing to summarize yet — check back after a few readings.</div>
+      <button class="btn-ghost btn-full" id="viewReportBtn">View this week's report</button>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Notifications</div>
+          <div class="card-sub">How we reach you</div>
+        </div>
+      </div>
+      <div class="notif-toggle">Banner on screen<div class="toggle on" id="tog-screen" data-notif="screen" role="switch" aria-checked="true" tabindex="0"><div class="toggle-knob"></div></div></div>
+      <div class="notif-toggle">A beep<div class="toggle on" id="tog-sound" data-notif="sound" role="switch" aria-checked="true" tabindex="0"><div class="toggle-knob"></div></div></div>
+      <div class="notif-toggle">A spoken warning<div class="toggle on" id="tog-voice" data-notif="voice" role="switch" aria-checked="true" tabindex="0"><div class="toggle-knob"></div></div></div>
+      <div class="notif-toggle">Push notification (ntfy)<div class="toggle on" id="tog-push" data-notif="push" role="switch" aria-checked="true" tabindex="0"><div class="toggle-knob"></div></div></div>
+      <div class="help-text">We'll only speak up when something needs your attention — and again if the smell changes, so it won't repeat itself.</div>
+    </div>
+
+    
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <div class="card-title">Push notifications</div>
+          <div class="card-sub">Free, no account needed — via ntfy.sh</div>
+        </div>
+      </div>
+      <div class="contact-row">
+        <input type="text" id="ntfyTopic" placeholder="Your topic name, e.g. scentinel-8k2ndq9x">
+      </div>
+      <label class="notif-toggle" style="cursor:pointer;">
+        <span>Use a different server (self-hosted)</span>
+        <input type="checkbox" id="ntfyCustomServerToggle" style="width:18px;height:18px;accent-color:var(--accent);">
+      </label>
+      <div class="contact-row" id="ntfyServerRow" style="display:none;">
+        <input type="text" id="ntfyServerUrl" placeholder="e.g. https://ntfy.myserver.com">
+      </div>
+      <button class="btn-primary btn-full" id="saveNtfyTopicBtn">Save</button>
+      <button class="btn-ghost btn-full" id="testNtfyBtn" style="margin-top:8px;">Send test push</button>
+      <div class="help-text" id="ntfyStatusText">No topic set — alerts won't be pushed until you add one.</div>
+      <div class="help-text">Pick a long, hard-to-guess topic name (not just "scentinel") — anyone who knows it can subscribe or publish to it, since there's no login. Share it with your contacts so they can subscribe in the ntfy app (Android/iOS) or at ntfy.sh/app in a browser. Leave the server checkbox off to use the free public ntfy.sh — only tick it if you're running your own ntfy server.</div>
+    </div>
+
+  </main>
+
+  <footer>Team Phyro · Scentinel-AI · SIH 2026</footer>
+
+</div>
+
+
+<div class="sheet-overlay" id="sheetOverlay" onclick="closeSheet()"></div>
+<div class="sheet" id="settingsSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-head">
+    <h2>Settings</h2>
+    <button class="icon-btn" onclick="closeSheet()">✕</button>
+  </div>
+  <div class="sheet-body">
+
+    <div>
+      <div class="sheet-section-label">Connection</div>
+      <div class="panel">
+        <div class="panel-sub" id="firebaseStatusText">Not connected to a sensor yet.</div>
+        <button class="btn-ghost btn-full" id="demoBtn">▶ Try demo</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sheet-section-label">Voice</div>
+      <div class="panel">
+        <div class="speaker-row">
+          <div class="speaker-icon" id="speakerIcon">🔈</div>
+          <div class="speaker-info">
+            <div class="sp-state" id="speakerStateText">QUIET</div>
+            <div class="sp-sub" id="speakerSubText">Nothing to say right now</div>
+          </div>
+        </div>
+        <button class="btn-ghost btn-full" onclick="testSpeaker()">▶ Hear a test</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="sheet-section-label">History</div>
+      <div class="panel">
+        <div class="log-actions">
+          <button class="btn-ghost btn-small" id="exportBtn">Save as CSV</button>
+          <button class="btn-danger btn-small" id="clearBtn">Clear history</button>
+        </div>
+        <div class="log-table-wrap">
+          <table>
+            <thead><tr><th>Time</th><th>Smell</th><th>Temp</th><th>Hum</th><th>Alert</th></tr></thead>
+            <tbody id="logBody"></tbody>
+          </table>
+          <div class="empty-log" id="emptyLog">Nothing logged yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">💛 Scentinel-AI is a second nose, not a replacement for one — the hardware isn't a certified fire, gas, or medical device yet, so keep your usual detectors in place too.</div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  const SMELL_INFO = {
+    "Normal Air":   {severity:"safe",    icon:"🌿", note:"Nothing to worry about right now"},
+    "Coffee":       {severity:"safe",    icon:"☕", note:"Just coffee in the air"},
+    "Perfume":      {severity:"safe",    icon:"🌸", note:"Just fragrance in the air"},
+    "Spoiled Food": {severity:"caution", icon:"🍂", note:"Might be time to check the fridge"},
+    "Smoke":        {severity:"hazard",  icon:"💨", note:"Smoke detected — please check nearby"},
+    "Gas Leak":     {severity:"hazard",  icon:"⚠️", note:"Gas smell detected — please check nearby"}
+  };
+
+  let ws = null;
+  let mode = "idle";
+  const history = [];
+  const MAX_LOG = 300;
+  const MAX_CHART_POINTS = 60;
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  let notifs = { screen:true, sound:true, voice:true, push:true, weekly:true };
+  let lastSmell = null;
+  let theme = localStorage.getItem("scentinel_theme") || "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+
+  const SMELL_COLORS = {
+    "Normal Air":   "#B9C46B",
+    "Coffee":       "#A9702F",
+    "Perfume":      "#D98FAE",
+    "Spoiled Food": "#D3A427",
+    "Smoke":        "#8C7457",
+    "Gas Leak":     "#E86A50"
+  };
+
+  const statusPill = document.getElementById("statusText");
+  const statusPillDot = document.getElementById("camStatusDot");
+  const demoBtn = document.getElementById("demoBtn");
+  const riskFill = document.getElementById("riskFill");
+  const riskMeta = document.getElementById("riskMeta");
+  const logBody = document.getElementById("logBody");
+  const emptyLog = document.getElementById("emptyLog");
+  const recentList = document.getElementById("recentList");
+  const statusBadge = document.getElementById("statusBadge");
+  const statusBadgeLabel = document.getElementById("statusBadgeLabel");
+  const statusBadgeDetail = document.getElementById("statusBadgeDetail");
+  const statusBadgeEmoji = document.getElementById("statusBadgeEmoji");
+
+ 
+  function openSheet(){
+    document.getElementById("settingsSheet").classList.add("show");
+    document.getElementById("sheetOverlay").classList.add("show");
+  }
+  window.openSheet = openSheet;
+  function closeSheet(){
+    document.getElementById("settingsSheet").classList.remove("show");
+    document.getElementById("sheetOverlay").classList.remove("show");
+  }
+  window.closeSheet = closeSheet;
+
+
+  function toggleTheme(){
+    theme = theme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", theme);
+    document.getElementById("themeBtn").textContent = theme === "dark" ? "🌙" : "☀️";
+    localStorage.setItem("scentinel_theme", theme);
+    refreshChartTheme();
+  }
+  window.toggleTheme = toggleTheme;
+  document.getElementById("themeBtn").textContent = theme === "dark" ? "🌙" : "☀️";
+
+  
+  function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function chartStub(){
+    return {
+      data:{ labels:[], datasets:[{ data:[], borderColor:"", backgroundColor:"" }] },
+      options:{ scales:{ y:{ grid:{}, ticks:{} }, x:{ ticks:{} } } },
+      update(){}
+    };
+  }
+  const chartsAvailable = typeof Chart !== "undefined";
+  if(!chartsAvailable) console.warn("Scentinel-AI: Chart.js failed to load — charts disabled, rest of the app still works.");
+
+  let lineChart, pieChart;
+  try{
+    const ctx = document.getElementById("lineChart").getContext("2d");
+    lineChart = chartsAvailable ? new Chart(ctx, {
+      type: "line",
+      data: { labels: [], datasets: [{
+        label: "Strength", data: [],
+        borderColor: cssVar('--accent') || "#E8A05C", backgroundColor: cssVar('--accent-soft') || "rgba(232,160,92,0.15)",
+        fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5
+      }]},
+      options: {
+        responsive:true, maintainAspectRatio:false, animation:{duration:300},
+        scales:{
+          y:{min:0,max:100, grid:{color:cssVar('--border')}, ticks:{color:cssVar('--text3'), font:{family:"JetBrains Mono", size:10}}},
+          x:{grid:{display:false}, ticks:{color:cssVar('--text3'), maxTicksLimit:5, font:{family:"JetBrains Mono", size:9}}}
+        },
+        plugins:{legend:{display:false}}
+      }
+    }) : chartStub();
+
+    
+    const pieCtx = document.getElementById("pieChart").getContext("2d");
+    pieChart = chartsAvailable ? new Chart(pieCtx, {
+      type: "doughnut",
+      data: { labels: [], datasets: [{ data: [], backgroundColor: [], borderColor: cssVar('--bg2') || "#241A11", borderWidth: 2 }] },
+      options: {
+        responsive:true, maintainAspectRatio:false, cutout:"62%",
+        animation:{duration:300},
+        plugins:{ legend:{display:false}, tooltip:{enabled:true} }
+      }
+    }) : chartStub();
+  }catch(e){
+    console.warn("Scentinel-AI: chart init failed, continuing without charts.", e);
+    lineChart = chartStub();
+    pieChart = chartStub();
+  }
+
+  function updatePieChart(){
+    const counts = {};
+    history.forEach(row => { counts[row.smell] = (counts[row.smell]||0) + 1; });
+    const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const legend = document.getElementById("pieLegend");
+    const sub = document.getElementById("breakdownSub");
+    if(!entries.length){
+      pieChart.data.labels = []; pieChart.data.datasets[0].data = []; pieChart.data.datasets[0].backgroundColor = [];
+      pieChart.update("none");
+      legend.innerHTML = '<span class="empty-note">No readings yet.</span>';
+      sub.textContent = "What's been noticed most often";
+      return;
+    }
+    pieChart.data.labels = entries.map(e=>e[0]);
+    pieChart.data.datasets[0].data = entries.map(e=>e[1]);
+    pieChart.data.datasets[0].backgroundColor = entries.map(e=>SMELL_COLORS[e[0]] || "#8C7457");
+    pieChart.data.datasets[0].borderColor = cssVar('--bg2');
+    pieChart.update("none");
+    sub.textContent = `Most often: ${entries[0][0]}`;
+    legend.innerHTML = entries.map(([smell,count])=>{
+      const icon = SMELL_INFO[smell] ? SMELL_INFO[smell].icon : "🔎";
+      return `<div class="pie-legend-row">
+        <span class="pie-swatch" style="background:${SMELL_COLORS[smell]||'#8C7457'}"></span>
+        <span class="pie-legend-name">${icon} ${smell}</span>
+        <span class="pie-legend-count">${count}</span>
+      </div>`;
+    }).join("");
+  }
+
+  function refreshChartTheme(){
+    lineChart.data.datasets[0].borderColor = cssVar('--accent');
+    lineChart.data.datasets[0].backgroundColor = cssVar('--accent-soft');
+    lineChart.options.scales.y.grid.color = cssVar('--border');
+    lineChart.options.scales.y.ticks.color = cssVar('--text3');
+    lineChart.options.scales.x.ticks.color = cssVar('--text3');
+    lineChart.update();
+    pieChart.data.datasets[0].borderColor = cssVar('--bg2');
+    pieChart.update();
+  }
+
+
+  function setStatus(newMode, label){
+    mode = newMode;
+    statusPillDot.className = "conn-dot" + (newMode==="connected"||newMode==="demo" ? " active" : newMode==="connecting" ? " warn" : newMode==="error" ? " err" : "");
+    statusPill.textContent = label;
+    demoBtn.textContent = newMode==="demo" ? "■ Stop demo" : "▶ Try demo";
+  }
+  window.__scentinelSetStatus = setStatus;
+  setStatus("idle","Not connected");
+
+  loadHistory();
+  renderLog();
+  renderRecent();
+  updatePieChart();
+  renderWeeklyReportText();
+
+  function dominantChannel(v){
+    const entries = [["mq2",v.mq2||0],["mq135",v.mq135||0],["bme680",v.bme680||0]];
+    entries.sort((a,b)=>b[1]-a[1]);
+    return entries[0][0];
+  }
+
+  function deriveSmell(data, v){
+    if(data.smell && SMELL_INFO[data.smell]) return data.smell;
+    if(v.risk < 35) return "Normal Air";
+    const dom = dominantChannel(v);
+    if(dom === "mq2") return v.risk >= 70 ? "Gas Leak" : "Smoke";
+    if(dom === "mq135") return "Spoiled Food";
+    return v.risk < 55 ? "Coffee" : "Perfume";
+  }
+
+  function applyBadge(severity, smell){
+    const info = SMELL_INFO[smell] || {icon:"🔎", note:""};
+    statusBadge.className = "badge" + (severity==="caution" ? " caution" : severity==="hazard" ? " hazard" : "");
+    statusBadgeLabel.textContent = smell;
+    statusBadgeEmoji.textContent = info.icon;
+    if(severity === "hazard"){
+      statusBadgeDetail.textContent = info.note || "This needs your attention now";
+    } else if(severity === "caution"){
+      statusBadgeDetail.textContent = info.note || "Keeping an eye on this";
+    } else {
+      statusBadgeDetail.textContent = info.note || "Nothing to worry about right now";
+    }
+  }
+
+  function handleReading(data){
+    if(!data) return;
+    const risk = (typeof data.risk === "number")
+      ? clamp(data.risk)
+      : clamp(((data.mq2||0) + (data.mq135||0) + (data.bme680||0)) / 3);
+
+    const v = {
+      mq2: clamp(data.mq2), mq135: clamp(data.mq135), bme680: clamp(data.bme680),
+      temp: typeof data.temp === "number" ? Math.round(data.temp*10)/10 : null,
+      humidity: typeof data.humidity === "number" ? Math.round(data.humidity) : null,
+      risk
+    };
+    const smell = deriveSmell(data, v);
+    const severity = SMELL_INFO[smell] ? SMELL_INFO[smell].severity : "caution";
+
+    riskFill.style.width = risk + "%";
+    riskFill.style.background = severity === "hazard" ? "var(--hazard)" : severity === "caution" ? "var(--accent)" : "var(--safe)";
+    riskMeta.textContent = severity === "hazard" ? "strong" : severity === "caution" ? "noticeable" : "faint";
+    applyBadge(severity, smell);
+
+    document.getElementById("val-temp").textContent = v.temp !== null ? v.temp : "—";
+    document.getElementById("val-humidity").textContent = v.humidity !== null ? v.humidity : "—";
+
+    const t = new Date();
+    const label = t.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit", second:"2-digit"});
+    lineChart.data.labels.push(label);
+    lineChart.data.datasets[0].data.push(risk);
+    if(lineChart.data.labels.length > MAX_CHART_POINTS){
+      lineChart.data.labels.shift();
+      lineChart.data.datasets[0].data.shift();
+    }
+    lineChart.update("none");
+
+    // Only speak up when the smell actually changes — and even then, only if
+    // the new smell needs attention. A normal-to-normal reading (or one safe
+    // smell drifting to another, e.g. Coffee -> Perfume) stays quiet; a
+    // change into something caution/hazard (like a gas leak) always alerts.
+    const alertFired = smell !== lastSmell && severity !== "safe";
+    if(alertFired){
+      triggerAlerts(smell, severity);
+    }
+    lastSmell = smell;
+
+    history.unshift({t: label, ts: Date.now(), temp: v.temp, humidity: v.humidity, risk, smell, severity, alertFired});
+    if(history.length > MAX_LOG) history.pop();
+    renderLog();
+    renderRecent();
+    updatePieChart();
+    saveHistory();
+    maybeSendWeeklyReport();
+  }
+  window.__scentinelHandleReading = handleReading;
+
+  
+  function saveHistory(){
+    try{ localStorage.setItem("scentinel_history_v1", JSON.stringify(history.slice(0, MAX_LOG))); }catch(e){}
+  }
+  function loadHistory(){
+    try{
+      const raw = localStorage.getItem("scentinel_history_v1");
+      if(!raw) return;
+      const saved = JSON.parse(raw);
+      if(Array.isArray(saved)) history.push(...saved);
+    }catch(e){}
+  }
+
+  function clamp(v){ return Math.max(0, Math.min(100, Math.round(Number(v)||0))); }
+
+  function renderLog(){
+    emptyLog.style.display = history.length ? "none" : "block";
+    logBody.innerHTML = history.slice(0,60).map(row=>{
+      const pillClass = row.severity === "hazard" ? "class-hazard" : row.severity === "caution" ? "class-caution" : "class-safe";
+      const icon = SMELL_INFO[row.smell] ? SMELL_INFO[row.smell].icon : "🔎";
+      const alertHtml = row.alertFired ? '<span class="alert-fired">Alerted</span>' : '<span class="alert-none">—</span>';
+      return `<tr>
+        <td>${row.t}</td>
+        <td><span class="class-pill ${pillClass}">${icon} ${row.smell}</span></td>
+        <td>${row.temp ?? "—"}</td><td>${row.humidity ?? "—"}</td>
+        <td>${alertHtml}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  function renderRecent(){
+    if(!history.length){
+      recentList.innerHTML = '<span class="empty-note">Nothing noticed yet — connect Firebase or try the demo in Settings.</span>';
+      return;
+    }
+    recentList.innerHTML = history.slice(0,10).map(row=>{
+      const icon = SMELL_INFO[row.smell] ? SMELL_INFO[row.smell].icon : "🔎";
+      return `<div class="recent-row">
+        <span class="recent-icon">${icon}</span>
+        <span class="recent-name">${row.smell}</span>
+        <span class="recent-time">${row.t}</span>
+      </div>`;
+    }).join("");
+  }
+
+
+  function triggerAlerts(smell, severity){
+    showBanner(smell, severity);
+    if(notifs.screen) document.getElementById("alertBanner").classList.add("show");
+    if(notifs.sound) playBeep(severity);
+    if(notifs.voice) speak(alertMessage(smell, severity));
+    if(notifs.push) sendPushAlert(smell, severity);
+    setTimeout(() => document.getElementById("alertBanner").classList.remove("show"), 6000);
+  }
+
+  function alertMessage(smell, severity){
+    return severity === "hazard" ? `Heads up — I'm picking up ${smell.toLowerCase()}.` : `Just a heads up — a bit of ${smell.toLowerCase()} in the air.`;
+  }
+
+  function showBanner(smell, severity){
+    const icon = SMELL_INFO[smell] ? SMELL_INFO[smell].icon : "🔔";
+    const word = severity === "hazard" ? "Please check nearby" : "Worth a look";
+    document.getElementById("alertText").textContent = `${icon} ${smell} — ${word}`;
+  }
+
+  function playBeep(severity){
+    try{
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const actx = new AudioCtx();
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.connect(gain); gain.connect(actx.destination);
+      osc.frequency.value = severity === "hazard" ? 1040 : 700;
+      gain.gain.setValueAtTime(0.3, actx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.45);
+      osc.start(); osc.stop(actx.currentTime + 0.45);
+    }catch(e){}
+  }
+
+
+  function setSpeakerUI(active, state, sub){
+    document.getElementById("speakerIcon").classList.toggle("on", active);
+    document.getElementById("speakerIcon").textContent = active ? "🔊" : "🔈";
+    document.getElementById("speakerStateText").textContent = state;
+    document.getElementById("speakerSubText").textContent = sub;
+  }
+
+  function speak(text){
+    if(!("speechSynthesis" in window)){
+      addLog("Voice isn't supported in this browser: " + text, "err");
+      return;
+    }
+    try{
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.95;
+      setSpeakerUI(true, "SPEAKING", text);
+      utter.onend = () => setSpeakerUI(false, "QUIET", "Nothing to say right now");
+      window.speechSynthesis.speak(utter);
+      addLog("🔊 Said: " + text, "info");
+    }catch(e){
+      addLog("Speaker error: " + e.message, "err");
+    }
+  }
+
+  function testSpeaker(){
+    speak("This is a test of the Scentinel voice alert.");
+  }
+  window.testSpeaker = testSpeaker;
+
+  
+  const NTFY_TOPIC_KEY = "scentinel_ntfy_topic";
+  const NTFY_SERVER_KEY = "scentinel_ntfy_server";       
+  const NTFY_USE_CUSTOM_KEY = "scentinel_ntfy_use_custom"; 
+  const DEFAULT_NTFY_SERVER = "https://ntfy.sh";
+  const ntfyTopicInput = document.getElementById("ntfyTopic");
+  const ntfyStatusText = document.getElementById("ntfyStatusText");
+  const ntfyCustomServerToggle = document.getElementById("ntfyCustomServerToggle");
+  const ntfyServerRow = document.getElementById("ntfyServerRow");
+  const ntfyServerUrlInput = document.getElementById("ntfyServerUrl");
+
+  function getNtfyTopic(){
+    try{ return localStorage.getItem(NTFY_TOPIC_KEY) || ""; }catch(e){ return ""; }
+  }
+  function useCustomServer(){
+    try{ return localStorage.getItem(NTFY_USE_CUSTOM_KEY) === "1"; }catch(e){ return false; }
+  }
+  function getNtfyServer(){
+    if(!useCustomServer()) return DEFAULT_NTFY_SERVER;
+    try{
+      const url = (localStorage.getItem(NTFY_SERVER_KEY) || "").trim().replace(/\/+$/,"");
+      return url || DEFAULT_NTFY_SERVER;
+    }catch(e){ return DEFAULT_NTFY_SERVER; }
+  }
+  function renderNtfyStatus(){
+    const topic = getNtfyTopic();
+    const custom = useCustomServer();
+    if(ntfyTopicInput) ntfyTopicInput.value = topic;
+    if(ntfyCustomServerToggle) ntfyCustomServerToggle.checked = custom;
+    if(ntfyServerRow) ntfyServerRow.style.display = custom ? "flex" : "none";
+    if(ntfyServerUrlInput){
+      try{ ntfyServerUrlInput.value = localStorage.getItem(NTFY_SERVER_KEY) || ""; }catch(e){}
+    }
+    if(ntfyStatusText){
+      const server = getNtfyServer();
+      ntfyStatusText.textContent = topic
+        ? `Publishing to "${server}/${topic}" — make sure your contacts are subscribed to this exact topic on this exact server.`
+        : "No topic set — alerts won't be pushed until you add one.";
+    }
+  }
+  renderNtfyStatus();
+
+  ntfyCustomServerToggle.addEventListener("change", ()=>{
+    ntfyServerRow.style.display = ntfyCustomServerToggle.checked ? "flex" : "none";
+  });
+
+  document.getElementById("saveNtfyTopicBtn").addEventListener("click", ()=>{
+    const topic = (ntfyTopicInput.value || "").trim();
+    const custom = ntfyCustomServerToggle.checked;
+    const serverUrl = (ntfyServerUrlInput.value || "").trim();
+    try{
+      localStorage.setItem(NTFY_TOPIC_KEY, topic);
+      localStorage.setItem(NTFY_USE_CUSTOM_KEY, custom ? "1" : "0");
+      localStorage.setItem(NTFY_SERVER_KEY, serverUrl);
+    }catch(e){}
+    renderNtfyStatus();
+    addLog(topic ? `Push settings saved — server: ${getNtfyServer()}, topic: ${topic}` : "Push topic cleared", "ok");
+  });
+
+  function sendPushAlert(smell, severity){
+    const topic = getNtfyTopic();
+    if(!topic){ addLog("🔔 Push skipped — no ntfy topic set in Settings.", "info"); return; }
+    const server = getNtfyServer();
+    
+    const title = severity === "hazard" ? "Scentinel Hazard Alert" : "Scentinel Notice";
+    const message = severity === "hazard"
+      ? `${smell} detected — please check nearby.`
+      : `${smell} detected — worth a look.`;
+    console.log("[Scentinel ntfy] publishing to server:", server, "topic:", topic, "-> ", title, message);
+    fetch(`${server}/${encodeURIComponent(topic)}`, {
+      method: "POST",
+      headers: {
+        "Title": title,
+        "Priority": severity === "hazard" ? "urgent" : "default",
+        "Tags": severity === "hazard" ? "rotating_light" : "warning"
+      },
+      body: message
+    })
+      .then(r => {
+        console.log("[Scentinel ntfy] HTTP status:", r.status);
+        if(!r.ok) throw new Error("ntfy HTTP " + r.status);
+        addLog(`📲 Push sent to topic "${topic}": ${smell} — ${severity}`, severity === "hazard" ? "err" : "info");
+      })
+      .catch(err => {
+        console.error("[Scentinel ntfy] FAILED:", err);
+        addLog(`📲 Push failed: ${err}`, "err");
+      });
+  }
+  window.__scentinelSendPushTest = () => sendPushAlert("Test Alert", "caution");
+
+  document.getElementById("testNtfyBtn").addEventListener("click", ()=>{
+    if(!getNtfyTopic()){ addLog("Set and save a topic name first.", "err"); return; }
+    window.__scentinelSendPushTest();
+  });
+
+
+  function loadNotifPrefs(){
+    try{
+      const raw = localStorage.getItem("scentinel_notifs_v1");
+      if(raw) Object.assign(notifs, JSON.parse(raw));
+    }catch(e){}
+  }
+  function saveNotifPrefs(){
+    try{ localStorage.setItem("scentinel_notifs_v1", JSON.stringify(notifs)); }catch(e){}
+  }
+  function syncToggleUI(type){
+    const el = document.getElementById("tog-" + type);
+    if(!el) return;
+    el.classList.toggle("on", !!notifs[type]);
+    el.setAttribute("aria-checked", notifs[type] ? "true" : "false");
+  }
+  function toggleNotif(type){
+    notifs[type] = !notifs[type];
+    syncToggleUI(type);
+    saveNotifPrefs();
+  }
+  window.toggleNotif = toggleNotif;
+
+  loadNotifPrefs();
+  document.querySelectorAll("[data-notif]").forEach(el=>{
+    const type = el.getAttribute("data-notif");
+    syncToggleUI(type);
+    el.addEventListener("click", ()=> toggleNotif(type));
+    el.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleNotif(type); }
+    });
+  });
+
+  
+  function addLog(msg, type=""){
+    const d = new Date();
+    const t = String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
+    const lw = document.getElementById("logWrap");
+    if(lw){
+      lw.innerHTML += '<div class="log-line ' + type + '">[' + t + '] ' + msg + '</div>';
+      lw.scrollTop = lw.scrollHeight;
+    } else {
+      
+      (type === "err" ? console.warn : console.log)('[' + t + '] ' + msg);
+    }
+  }
+  window.__scentinelAddLog = addLog;
+
+  document.getElementById("exportBtn").addEventListener("click", ()=>{
+    if(!history.length) return;
+    const header = "time,smell,temp,humidity,severity,alert_sent\n";
+    const rows = history.slice().reverse().map(r=>
+      [r.t, r.smell, r.temp??"", r.humidity??"", r.severity, r.alertFired?"yes":"no"].join(",")
+    ).join("\n");
+    const blob = new Blob([header+rows], {type:"text/csv"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "scentinel_history.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById("clearBtn").addEventListener("click", ()=>{
+    history.length = 0;
+    renderLog();
+    renderRecent();
+    updatePieChart();
+    saveHistory();
+  });
+
+
+  function buildWeeklyReport(){
+    const since = Date.now() - WEEK_MS;
+    const weekRows = history.filter(r => (r.ts || 0) >= since);
+    if(!weekRows.length) return null;
+    const counts = {};
+    let alerts = 0;
+    weekRows.forEach(r => {
+      counts[r.smell] = (counts[r.smell]||0) + 1;
+      if(r.alertFired) alerts += 1;
+    });
+    const ranked = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    return { total: weekRows.length, top: ranked[0], ranked, alerts };
+  }
+
+  function reportText(report){
+    if(!report) return "Nothing to summarize yet — check back after a few readings.";
+    const [topSmell, topCount] = report.top;
+    const alertPart = report.alerts ? `, ${report.alerts} alert${report.alerts===1?"":"s"} sent` : ", no alerts";
+    return `This week: ${report.total} reading${report.total===1?"":"s"}, mostly ${topSmell} (${topCount})${alertPart}.`;
+  }
+
+  function renderWeeklyReportText(){
+    document.getElementById("weeklyReportText").textContent = reportText(buildWeeklyReport());
+  }
+
+  function maybeSendWeeklyReport(){
+    renderWeeklyReportText();
+    if(!notifs.weekly) return;
+    const last = Number(localStorage.getItem("scentinel_last_weekly_report") || 0);
+    if(Date.now() - last < WEEK_MS) return;
+    const report = buildWeeklyReport();
+    if(!report) return;
+    const text = "📊 " + reportText(report);
+    if(notifs.screen){
+      document.getElementById("alertText").textContent = text;
+      document.getElementById("alertBanner").classList.add("show");
+      setTimeout(() => document.getElementById("alertBanner").classList.remove("show"), 7000);
+    }
+    addLog(text, "info");
+    localStorage.setItem("scentinel_last_weekly_report", String(Date.now()));
+  }
+
+  document.getElementById("viewReportBtn").addEventListener("click", ()=>{
+    const report = buildWeeklyReport();
+    renderWeeklyReportText();
+    const text = "📊 " + reportText(report);
+    document.getElementById("alertText").textContent = text;
+    document.getElementById("alertBanner").classList.add("show");
+    setTimeout(() => document.getElementById("alertBanner").classList.remove("show"), 7000);
+    addLog(text, "info");
+  });
+
+  
+  let demoTimer = null;
+  const DEMO_HAZARD_SMELLS = ["Gas Leak","Smoke","Spoiled Food"];
+  demoBtn.addEventListener("click", ()=>{
+    if(mode === "demo"){ stopDemo(); setStatus("idle","Not connected"); return; }
+    if(ws){ ws.close(); ws = null; }
+    setStatus("demo","Demo mode");
+    lastSmell = null; 
+    let tick = 0;
+    demoTimer = setInterval(()=>{
+      tick += 1;
+      const wobble = (base, speed, spread)=> base + Math.sin(tick/speed)*spread + (Math.random()*8-4);
+      const spike = (tick === 1) || (tick % 25 === 0); 
+      const spikeSmell = DEMO_HAZARD_SMELLS[Math.floor(Math.random()*DEMO_HAZARD_SMELLS.length)];
+      handleReading({
+        mq2: spike && spikeSmell !== "Spoiled Food" ? 85 + Math.random()*10 : wobble(22, 8, 10),
+        mq135: spike ? 55 + Math.random()*10 : wobble(28, 6, 12),
+        bme680: wobble(20, 10, 8),
+        temp: wobble(26, 15, 1.5),
+        humidity: wobble(52, 12, 6),
+        smell: spike ? spikeSmell : undefined
+      });
+    }, 1000);
+  });
+  function stopDemo(){ if(demoTimer){ clearInterval(demoTimer); demoTimer = null; } }
+  window.__scentinelStopDemo = stopDemo;
+
+})();
+</script>
+
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDtqWZNBQJHaW0-Y88WZDhH2um1KPETSZo",
+    authDomain: "scential-ai-digitalnose.firebaseapp.com",
+    databaseURL: "https://scential-ai-digitalnose-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "scential-ai-digitalnose",
+    storageBucket: "scential-ai-digitalnose.firebasestorage.app",
+    messagingSenderId: "750437186984",
+    appId: "1:750437186984:web:867f56159ba8bc41ddf19d"
+  };
+  const FIREBASE_LIVE_PATH = "scentinel/live"; 
+
+  const isConfigured = firebaseConfig.apiKey && !firebaseConfig.apiKey.startsWith("YOUR_");
+  const statusEl = document.getElementById("firebaseStatusText");
+
+  if(!isConfigured){
+    if(statusEl) statusEl.textContent = "Not connected to a sensor yet — try the demo below.";
+  } else {
+    try{
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+      if(statusEl) statusEl.textContent = "Connecting to your sensor…";
+      window.__scentinelSetStatus && window.__scentinelSetStatus("connecting", "Connecting…");
+
+      onValue(ref(db, FIREBASE_LIVE_PATH), (snapshot)=>{
+        const data = snapshot.val();
+        if(!data) return;
+        window.__scentinelStopDemo && window.__scentinelStopDemo();
+        window.__scentinelSetStatus && window.__scentinelSetStatus("connected", "Live");
+        if(statusEl) statusEl.textContent = "Connected — reading live.";
+        window.__scentinelHandleReading && window.__scentinelHandleReading(data);
+      }, (error)=>{
+        window.__scentinelSetStatus && window.__scentinelSetStatus("error", "Connection issue");
+        if(statusEl) statusEl.textContent = "Having trouble connecting — try the demo below.";
+      });
+    }catch(e){
+      if(statusEl) statusEl.textContent = "Having trouble connecting — try the demo below.";
+    }
+  }
+</script>
+
+</body>
+</html>
